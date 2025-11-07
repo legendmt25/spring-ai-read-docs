@@ -38,10 +38,9 @@
     <!-- Spring framework AI Dependencies -->
     <dependency>
       <groupId>org.springframework.ai</groupId>
-      <artifactId>spring-ai-autoconfigure-model-openai</artifactId>
+      <artifactId>spring-ai-starter-model-ollama</artifactId>
     </dependency>
 
-    <!--Spring Boot dependencies -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
