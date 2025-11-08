@@ -1,12 +1,16 @@
 server:
-  port: 8080
+  port: 7020
 
 spring:
+  application:
+    name: DocParser
   ai:
     model:
       chat: ollama
     ollama:
-      base-url: http://localhost:11434
       chat:
         options:
-          model: "deepseek-r1:1.5b"
+          model: deepseek-r1:1.5b
+    vectorstore:
+      qdrant:
+        initialize-schema: true
