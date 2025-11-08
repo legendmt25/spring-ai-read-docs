@@ -99,3 +99,36 @@ button:disabled {
     cursor: not-allowed
 }
 
+/* Styles for store controls */
+.store-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.store-controls input[type="file"] {
+    display: inline-block;
+}
+
+.store-controls input[type="text"] {
+    flex: 1 1 auto;
+    padding: 8px 10px;
+    border: 1px solid #e6eef8;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+@media (max-width: 640px) {
+    .store-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .store-controls input[type="file"],
+    .store-controls button,
+    .store-controls input[type="text"] {
+        width: 100%;
+    }
+}

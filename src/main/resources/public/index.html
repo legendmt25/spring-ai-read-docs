@@ -13,8 +13,16 @@
     <div class="chat">
       <div id="messages" class="messages" aria-live="polite"></div>
 
+      <!-- Store controls: attach file or provide URL -->
+      <div id="store-controls" class="store-controls">
+        <input type="file" id="store-file" accept=".pdf,application/pdf" aria-label="Upload PDF document" />
+        <button type="button" id="store-upload-btn">Attach & Upload PDF</button>
+        <input type="text" id="store-url" placeholder="Or paste URL to scrape" aria-label="URL to scrape" />
+        <button type="button" id="store-url-btn">Send URL</button>
+      </div>
+
       <form id="chat-form" class="chat-form">
-        <textarea id="message" placeholder="Ask something about the docs..." rows="3"></textarea>
+        <textarea id="message" placeholder="Ask something about the docs..." rows="3" aria-label="Message"></textarea>
         <div class="actions">
           <button type="submit" id="send">Send</button>
         </div>

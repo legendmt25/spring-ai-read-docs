@@ -1,6 +1,7 @@
 (function () {
   // Constants
   const API_CHAT = '/api/chat';
+  const API_STORE = '/api/store';
 
   // State
   let conversationId = null;
@@ -11,6 +12,12 @@
   const messagesEl = document.getElementById('messages');
   const sendButton = form ? form.querySelector('button[type="submit"]') : null;
 
+  // Store controls
+  const storeFileInput = document.getElementById('store-file');
+  const storeUploadBtn = document.getElementById('store-upload-btn');
+  const storeUrlInput = document.getElementById('store-url');
+  const storeUrlBtn = document.getElementById('store-url-btn');
+
   if (!form || !textarea || !messagesEl) {
     console.warn('Chat UI elements not found. Aborting chat script.');
     return;
@@ -19,13 +26,12 @@
   // Helpers
   function createMessageEl(text, cls) {
     const div = document.createElement('div');
-    div.className = 'message ' + (cls.toLowerCase() || '');
+    div.className = 'message ' + (cls ? cls.toLowerCase() : '');
     div.textContent = text;
     return div;
   }
 
   function createMessage(messageType, text) {
-    console.log('Creating message:', messageType, text);
     return `${messageType.charAt(0).toUpperCase() + messageType.slice(1).toLowerCase()}: ${text}`;
   }
 
@@ -36,6 +42,7 @@
   }
 
   function appendMessages(messages) {
+    if (!Array.isArray(messages)) return;
     messages.forEach(msg => {
       appendMessage(createMessage(msg.messageType, msg.text), msg.messageType);
     });
@@ -63,7 +70,9 @@
   const MessageType = {
     USER: "user",
     ASSISTANT: "assistant",
-    SYSTEM: "system"
+    SYSTEM: "system",
+    INFO: "info",
+    ERROR: "error"
   };
 
   // Fetch conversation history by id
@@ -122,12 +131,67 @@
         }
       }
 
-      const dataMessage = data.message || JSON.stringify(data);
+      // Support different response shapes
+      let dataMessage = null;
+      if (data && typeof data === 'object') {
+        dataMessage = data.message || (Array.isArray(data) ? data[0] : null) || { messageType: 'assistant', text: JSON.stringify(data) };
+      } else {
+        dataMessage = { messageType: 'assistant', text: String(data) };
+      }
+
       appendMessage(createMessage(dataMessage.messageType, dataMessage.text), dataMessage.messageType);
     } catch (err) {
       appendMessage('Network error: ' + err.message, 'error');
     } finally {
       setSending(false);
+    }
+  }
+
+  // --- Store handlers ---
+  async function uploadFileToStore(file) {
+    appendMessage(`Uploading file: ${file.name}`, MessageType.INFO);
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const res = await fetch(API_STORE, {
+        method: 'POST',
+        credentials: 'same-origin',
+        body: fd
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        appendMessage('Store upload error: ' + res.status + ' ' + txt, MessageType.ERROR);
+        return;
+      }
+
+      appendMessage('File uploaded successfully', MessageType.ASSISTANT);
+    } catch (err) {
+      appendMessage('Network error: ' + err.message, MessageType.ERROR);
+    }
+  }
+
+  async function sendUrlToStore(url) {
+    appendMessage(`Sending URL to store: ${url}`, MessageType.INFO);
+
+    try {
+      const res = await fetch(API_STORE, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        appendMessage('Store URL error: ' + res.status + ' ' + txt, MessageType.ERROR);
+        return;
+      }
+
+      appendMessage('URL sent successfully', MessageType.ASSISTANT);
+    } catch (err) {
+      appendMessage('Network error: ' + err.message, MessageType.ERROR);
     }
   }
 
@@ -151,6 +215,40 @@
     }
   });
 
+  // Store control event wiring (if DOM elements exist)
+  if (storeUploadBtn && storeFileInput) {
+    storeUploadBtn.addEventListener('click', function () {
+      const file = storeFileInput.files && storeFileInput.files[0];
+      if (!file) {
+        appendMessage('No file selected for upload', MessageType.ERROR);
+        return;
+      }
+      if (file.type && file.type !== 'application/pdf') {
+        appendMessage('Only PDF files are supported', MessageType.ERROR);
+        return;
+      }
+      uploadFileToStore(file);
+    });
+  }
+
+  if (storeUrlBtn && storeUrlInput) {
+    storeUrlBtn.addEventListener('click', function () {
+      const url = (storeUrlInput.value || '').trim();
+      if (!url) {
+        appendMessage('No URL provided', MessageType.ERROR);
+        return;
+      }
+      sendUrlToStore(url);
+    });
+
+    storeUrlInput.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        storeUrlBtn.click();
+      }
+    });
+  }
+
   // Init: parse conversationId from URL and fetch history if present
   function init() {
     try {
@@ -172,6 +270,6 @@
   }
 
   // Expose helpers for debugging / manual use from the console
-  window.__chat = { send, getMessages };
+  window.__chat = { send, getMessages, uploadFileToStore, sendUrlToStore };
 
 })();
