@@ -1,25 +1,19 @@
-package com.ai.docs.DocParser;
+package com.ai.docs.rest;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Vector;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/testing")
+@RequiredArgsConstructor
 public class AiTestController {
 
     private final ChatClient chatClient;
-
-    AiTestController(ChatClient.Builder chatClientBuilder, QuestionAnswerAdvisor advisor) {
-        this.chatClient = chatClientBuilder.defaultAdvisors(advisor).build();
-    }
 
     String generate() {
 

@@ -8,5 +8,18 @@ services:
     volumes:
       - ollama:/root/.ollama
     restart: unless-stopped
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    container_name: qdrant-docparser
+    restart: always
+    volumes:
+      - qdrant_storage:/qdrant/storage:z
+    ports:
+      - "6333:6333"
+      - "6334:6334"
 volumes:
   ollama: {}
+  qdrant_storage: {}
+
+# ollama pull deepseek-r1:1.5b
+# ollama pull mxbai-embed-large

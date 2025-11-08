@@ -1,10 +1,10 @@
-package com.example.rest.model;
+package com.ai.docs.rest.model;
 
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
-public class ChatRequest {
+public class ChatMessageRequest {
     private String message;
 }

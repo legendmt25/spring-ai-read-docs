@@ -4,6 +4,9 @@ server:
 spring:
   application:
     name: DocParser
+  http:
+    client:
+      factory: jdk
   ai:
     model:
       chat: ollama

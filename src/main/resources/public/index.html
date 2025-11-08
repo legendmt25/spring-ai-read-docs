@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Docs Chat</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>Docs Chat</h1>
+
+    <div class="chat">
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <form id="chat-form" class="chat-form">
+        <textarea id="message" placeholder="Ask something about the docs..." rows="3"></textarea>
+        <div class="actions">
+          <button type="submit" id="send">Send</button>
+        </div>
+      </form>
+    </div>
+  </main>
+  <script defer src="/js/app.js"></script>
+</body>
+</html>

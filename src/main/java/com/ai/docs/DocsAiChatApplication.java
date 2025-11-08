@@ -1,12 +1,12 @@
-package com.example;
+package com.ai.docs;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.SpringApplication;
 
 @SpringBootApplication
-public class SpringAIDocsParseReadApplication {
+public class DocsAiChatApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(SpringAIDocsParseReadApplication.class, args);
+    SpringApplication.run(DocsAiChatApplication.class, args);
   }
 }
