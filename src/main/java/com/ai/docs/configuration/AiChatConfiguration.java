@@ -19,14 +19,12 @@ public class AiChatConfiguration {
   }
 
   @Bean
-  public ChatClient defaultChatClient(
-    ChatModel chatModel,
-    ChatMemory chatMemory) {
+  public ChatClient defaultChatClient(ChatModel chatModel, ChatMemory chatMemory, QuestionAnswerAdvisor advisor) {
 
     return ChatClient.builder(chatModel)
       .defaultAdvisors(
         SimpleLoggerAdvisor.builder().build(),
-        MessageChatMemoryAdvisor.builder(chatMemory).build())
+        MessageChatMemoryAdvisor.builder(chatMemory).build(), advisor)
       .build();
   }
 }
