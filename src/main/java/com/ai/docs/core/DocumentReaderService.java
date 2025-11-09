@@ -1,9 +1,11 @@
 package com.ai.docs.core;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,7 +20,6 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 
@@ -26,6 +27,8 @@ import org.jsoup.Jsoup;
 @Service
 @RequiredArgsConstructor
 public class DocumentReaderService {
+
+  private final HtmlLinkScrapper htmlLinkScrapper;
 
   public List<Document> readPdf(Resource resource) {
     return new PagePdfDocumentReader(resource).read();
@@ -43,8 +46,10 @@ public class DocumentReaderService {
 
   public List<Document> scrape(String url, String baseUrl, Set<String> visited) throws IOException {
 
+    List<Document> allDocuments = new ArrayList<>();
+
     if (visited.contains(url)) {
-      return List.of();
+      return allDocuments;
     }
 
     log.info("Scrape url: {}", url);
@@ -55,38 +60,28 @@ public class DocumentReaderService {
       jsoupResponse = Jsoup.connect(url).execute();
     } catch (IOException e) {
       log.warn("Failed to fetch url: {} with exception {}", url, e.getMessage());
-      return List.of();
+      return allDocuments;
     }
 
     if (jsoupResponse.statusCode() != HttpStatus.OK.value()) {
       log.warn("Failed to fetch url: {} with status code {}, {}", url, jsoupResponse.statusCode(), jsoupResponse.statusMessage());
-      return List.of();
+      return allDocuments;
     }
 
     org.jsoup.nodes.Document document = jsoupResponse.parse();
-    Stream<String> navLinks = document
-      .selectStream("a")
-      .map(element -> element.attr("abs:href"))
-      .map(link -> link.replaceAll("#.*$", "")) // remove anchors
-      .filter(StringUtils::hasText)
+    List<String> links = htmlLinkScrapper.scrapeLinksStream(document)
       .filter(link -> link.startsWith(baseUrl))
-      .filter(Predicate.not(visited::contains));
+      .filter(Predicate.not(visited::contains))
+      .toList();
 
     Resource resource = new ByteArrayResource(document.toString().getBytes());
     List<Document> docs = readHtml(resource);
 
-    List<Document> allDocuments = navLinks.parallel()
-      .map(link -> {
-        try {
-          return scrape(link, baseUrl, visited);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      })
-      .flatMap(List::stream)
-      .collect(Collectors.toList());
-    allDocuments.addAll(docs);
+    for (String link : links) {
+      allDocuments.addAll(scrape(link, baseUrl, visited));
+    }
 
+    allDocuments.addAll(docs);
     return allDocuments;
   }
 }

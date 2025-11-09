@@ -28,10 +28,21 @@
   // Helpers
   function createMessageEl(text, cls) {
     const div = document.createElement('div');
-    div.className = 'message ' + (cls ? cls.toLowerCase() : 'assistant');
-    div.textContent = text;
+
+    const messageType = cls ? cls.toLowerCase() : MessageType.ASSISTANT;
+    div.className = 'message ' + messageType;
+
+    if (messageType === MessageType.ASSISTANT) {
+      div.innerHTML = marked.parse(text);
+    } else {
+      div.textContent = text;
+    }
     return div;
   }
+
+  /*
+  Assistant: Based on the context provided, I cannot find specific information about the **`-m`** (missing dependencies) argument in the documentation or related content. However, I can provide a comprehensive list of common CLI arguments that are typically used with `npm install`. If any of these details are not directly covered in the provided context, they might be present elsewhere in the documentation. Here is a list of commonly used `npm` CLI arguments: 1. **`npm install`** - Install a package. - Example: ```bash npm install @types/node ``` 2. **`npm run`** - Run a command or script. - Example (run a npm command): ```bash npm run --no-cache https://nodejs.org ``` 3. **`npm package @name`** - Get the name of a package from its ID. 4. **`npm find --module name`** - Find all installed packages with a specific module name. - Example: ```bash npm find --module "org.apache" org.apache.java* ``` 5. **`npm search --module_name`** - Search for a specific package name in the npm registry. 6. **`npm list --all`** - List all installed packages. - Example: ```bash npm list --all ``` 7. **`npm uninstall`** - Uninstall a package. - Example: ```bash npm uninstall @types/node ``` 8. **`npm cache`** - Cache the installed packages for faster access. 9. **`npm install --no-cache`** - Install packages without caching, useful when making network calls. - Example: ```bash npm install -D https://example.com package-name --no-cache ``` 10. **`npm run dev`** - Start development mode for a `npm` command (for long-running commands). - Example: ```bash npm run dev node @types/node ``` 11. **`npm help`** - Get help documentation for a command. - Example: ```bash npm help https://nodejs.org/docs/ ``` 12. **`npm --version`** - Print the version of npm installed. 13. **`npm install --save`** - Install packages and save in a specified directory. 14. **`npm package @name --no-install`** - Install only when requested. - Example: ```bash npm package https://example.com/package @name my-app --no-install ``` 15. **`npm run build`** - Build a project using `npm`. - Example: ```bash npm run build node @types/node ``` 16. **`npm run test`** - Test a package or script. - Example: ```bash npm run test package-node ``` These commands are typically covered in the documentation under "Documentations" section, such as the "Useful npm facts" and "Documentation". If any of these arguments are not directly listed here but are part of the documentation, they might be present elsewhere.
+   */
 
   function createMessage(messageType, text) {
     const mt = (messageType || 'assistant').toString();

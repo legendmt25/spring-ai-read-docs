@@ -1,6 +1,8 @@
 package com.ai.docs.rest;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,8 +64,16 @@ public class StoreController {
         return ResponseEntity.badRequest().body("Missing JSON body with 'url'");
       }
 
-      List<Document> documents = documentReaderService.scrape(request.getUrl());
-      vectorStoreLoader.load(documents);
+      CompletableFuture.runAsync(() -> {
+        List<Document> documents;
+        try {
+          documents = documentReaderService.scrape(request.getUrl());
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+        vectorStoreLoader.load(documents);
+      });
+
       return ResponseEntity.ok().build();
     } catch (Exception ex) {
       return ResponseEntity.status(500).body("Error processing URL store request: " + ex.getMessage());
