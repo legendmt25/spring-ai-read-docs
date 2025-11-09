@@ -26,8 +26,8 @@ public class VectorStoreLoader {
         vectorStore.add(documents);
     }
 
-    @PreDestroy
-    void destroy() {
-        vectorStore.delete("*");
-    }
+//    @PreDestroy
+//    void destroy() {
+//        vectorStore.delete("*");
+//    }
 }

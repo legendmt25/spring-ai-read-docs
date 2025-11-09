@@ -10,18 +10,40 @@
   <main class="container">
     <h1>Docs Chat</h1>
 
-    <div class="chat">
-      <div id="messages" class="messages" aria-live="polite"></div>
+    <div class="chat" role="region" aria-label="Chat interface">
+      <div class="chat-header">
+        <div id="conversation-info" class="conversation-info visually-hidden">
+          <span id="conversation-id" class="conversation-id"></span>
+          <button id="copy-link-btn" title="Copy conversation link">Copy</button>
+          <button id="clear-conversation-btn" title="Clear conversation">Clear</button>
+        </div>
+      </div>
+
+      <div id="messages" class="messages" aria-live="polite" aria-atomic="false"></div>
 
       <!-- Store controls: attach file or provide URL -->
       <div id="store-controls" class="store-controls">
-        <input type="file" id="store-file" accept=".pdf,application/pdf" aria-label="Upload PDF document" />
-        <button type="button" id="store-upload-btn">Attach & Upload PDF</button>
-        <input type="text" id="store-url" placeholder="Or paste URL to scrape" aria-label="URL to scrape" />
-        <button type="button" id="store-url-btn">Send URL</button>
+        <!-- Removed default form actions to avoid full-page reloads; JS will handle submissions -->
+        <form id="store-file-form" enctype="multipart/form-data" aria-label="Upload PDF document">
+          <div>
+            <label for="store-file" class="visually-hidden">Upload PDF document</label>
+            <input type="file" id="store-file" name="file" accept=".pdf,application/pdf" />
+          </div>
+          <div class="store-actions">
+            <button type="submit" name="action" value="upload" id="store-upload-btn">Attach &amp; Upload PDF</button>
+            <progress id="store-file-progress" value="0" max="100" hidden aria-hidden="true"></progress>
+          </div>
+        </form>
+
+        <form id="store-url-form" class="store-url-form" aria-label="Submit URL to scrape">
+          <label for="store-url" class="visually-hidden">URL to scrape</label>
+          <input type="url" id="store-url" name="url" placeholder="Or paste URL to scrape" autocomplete="off" />
+          <button type="submit" name="action" value="scrape" id="store-url-btn">Send URL</button>
+          <progress id="store-url-progress" value="0" max="100" hidden aria-hidden="true"></progress>
+        </form>
       </div>
 
-      <form id="chat-form" class="chat-form">
+      <form id="chat-form" class="chat-form" autocomplete="off">
         <textarea id="message" placeholder="Ask something about the docs..." rows="3" aria-label="Message"></textarea>
         <div class="actions">
           <button type="submit" id="send">Send</button>

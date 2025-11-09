@@ -2,87 +2,104 @@
     --bg: #f6f8fa;
     --card: #fff;
     --muted: #6b7280;
-    --accent: #0b5cff
+    --accent: #0b5cff;
+    --accent-600: #0849d1;
+    --danger: #c92a2a;
 }
 
 html, body {
-    height: 100%
+    height: 100%;
 }
 
 body {
     margin: 0;
-    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial;
-    background: var(--bg);
-    color: #111
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: linear-gradient(180deg, #f8fafc 0%, var(--bg) 100%);
+    color: #111;
+    -webkit-font-smoothing: antialiased;
 }
 
 .container {
     max-width: 900px;
     margin: 48px auto;
-    padding: 16px
+    padding: 16px;
 }
 
 h1 {
-    margin: 0 0 16px
+    margin: 0 0 16px;
+    font-size: 20px;
 }
 
 .chat {
     background: var(--card);
-    border-radius: 8px;
-    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
-    overflow: hidden
+    border-radius: 10px;
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    border: 1px solid #eef2f7;
 }
 
 .messages {
-    height: 360px;
+    height: 420px;
     overflow: auto;
-    padding: 16px;
-    border-bottom: 1px solid #eef2f7
+    padding: 20px;
+    border-bottom: 1px solid #eef2f7;
+    background: linear-gradient(180deg, rgba(250,250,252,0.6), transparent);
 }
 
 .message {
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    max-width: 85%
+    padding: 10px 14px;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    max-width: 85%;
+    line-height: 1.4;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02) inset;
 }
 
 .message.user {
-    background: #e6f0ff;
+    background: linear-gradient(180deg,#e6f0ff,#dcecff);
     margin-left: auto;
-    color: #032f6b
+    color: #032f6b;
 }
 
 .message.assistant {
-    background: #f3f4f6;
+    background: linear-gradient(180deg,#fbfdff,#f3f4f6);
     margin-right: auto;
-    color: #111
+    color: #111;
+}
+
+.message.info {
+    background: #eef6ff;
+    color: #0b4fd6;
+    border: 1px solid rgba(11,95,255,0.08);
 }
 
 .message.error {
-    background: #fff2f0;
-    border: 1px solid #ffd4d2;
-    color: #7a0316
+    background: #fff6f6;
+    border: 1px solid #ffd6d6;
+    color: var(--danger);
 }
 
 .chat-form {
     display: flex;
     flex-direction: column;
-    padding: 12px
+    padding: 12px;
+    gap: 8px;
 }
 
 .chat-form textarea {
     resize: none;
-    padding: 10px;
+    padding: 12px;
     border: 1px solid #e6eef8;
-    border-radius: 6px;
-    font-size: 14px
+    border-radius: 8px;
+    font-size: 15px;
+    min-height: 56px;
 }
 
 .actions {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 8px
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
 }
 
 button {
@@ -90,45 +107,93 @@ button {
     color: #fff;
     border: none;
     padding: 8px 14px;
-    border-radius: 6px;
-    cursor: pointer
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
 }
 
 button:disabled {
     opacity: 0.6;
-    cursor: not-allowed
+    cursor: not-allowed;
 }
 
 /* Styles for store controls */
 .store-controls {
     display: flex;
-    gap: 8px;
+    gap: 12px;
     align-items: center;
     padding: 12px;
     border-bottom: 1px solid #eef2f7;
+    background: linear-gradient(90deg, rgba(255,255,255,0.6), rgba(250,250,252,0.6));
+}
+
+.store-controls form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.store-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .store-controls input[type="file"] {
     display: inline-block;
 }
 
-.store-controls input[type="text"] {
+.store-controls input[type="text"],
+.store-controls input[type="url"] {
     flex: 1 1 auto;
     padding: 8px 10px;
     border: 1px solid #e6eef8;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
 }
 
-@media (max-width: 640px) {
+progress {
+    width: 128px;
+    height: 8px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Focus styles for accessibility */
+input:focus, textarea:focus, button:focus {
+    outline: 2px solid rgba(11,92,255,0.18);
+    outline-offset: 2px;
+}
+
+@media (max-width: 820px) {
+    .messages {
+        height: 360px;
+    }
+
     .store-controls {
         flex-direction: column;
         align-items: stretch;
     }
 
+    .store-controls form {
+        width: 100%;
+    }
+
     .store-controls input[type="file"],
     .store-controls button,
-    .store-controls input[type="text"] {
+    .store-controls input[type="url"] {
         width: 100%;
     }
 }

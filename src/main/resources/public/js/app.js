@@ -1,7 +1,7 @@
 (function () {
   // Constants
-  const API_CHAT = '/api/chat';
-  const API_STORE = '/api/store';
+  const API_CHAT = '/api/v1/chat';
+  const API_STORE = '/api/v1/store';
 
   // State
   let conversationId = null;
@@ -10,13 +10,15 @@
   const form = document.getElementById('chat-form');
   const textarea = document.getElementById('message');
   const messagesEl = document.getElementById('messages');
-  const sendButton = form ? form.querySelector('button[type="submit"]') : null;
+  const sendButton = document.getElementById('send');
 
   // Store controls
+  const storeFileForm = document.getElementById('store-file-form');
   const storeFileInput = document.getElementById('store-file');
-  const storeUploadBtn = document.getElementById('store-upload-btn');
+  const storeFileProgress = document.getElementById('store-file-progress');
+  const storeUrlForm = document.getElementById('store-url-form');
   const storeUrlInput = document.getElementById('store-url');
-  const storeUrlBtn = document.getElementById('store-url-btn');
+  const storeUrlProgress = document.getElementById('store-url-progress');
 
   if (!form || !textarea || !messagesEl) {
     console.warn('Chat UI elements not found. Aborting chat script.');
@@ -26,13 +28,15 @@
   // Helpers
   function createMessageEl(text, cls) {
     const div = document.createElement('div');
-    div.className = 'message ' + (cls ? cls.toLowerCase() : '');
+    div.className = 'message ' + (cls ? cls.toLowerCase() : 'assistant');
     div.textContent = text;
     return div;
   }
 
   function createMessage(messageType, text) {
-    return `${messageType.charAt(0).toUpperCase() + messageType.slice(1).toLowerCase()}: ${text}`;
+    const mt = (messageType || 'assistant').toString();
+    const label = mt.charAt(0).toUpperCase() + mt.slice(1).toLowerCase();
+    return `${label}: ${text}`;
   }
 
   function appendMessage(text, cls) {
@@ -44,7 +48,10 @@
   function appendMessages(messages) {
     if (!Array.isArray(messages)) return;
     messages.forEach(msg => {
-      appendMessage(createMessage(msg.messageType, msg.text), msg.messageType);
+      const mtRaw = msg && msg.messageType ? msg.messageType : (msg && msg.metadata && msg.metadata.role ? msg.metadata.role : 'assistant');
+      const mt = ('' + mtRaw).toLowerCase();
+      const text = msg && (msg.text || msg.content || msg.message || '') || '';
+      appendMessage(createMessage(mt, text), mt);
     });
   }
 
@@ -68,11 +75,11 @@
   }
 
   const MessageType = {
-    USER: "user",
-    ASSISTANT: "assistant",
-    SYSTEM: "system",
-    INFO: "info",
-    ERROR: "error"
+    USER: 'user',
+    ASSISTANT: 'assistant',
+    SYSTEM: 'system',
+    INFO: 'info',
+    ERROR: 'error'
   };
 
   // Fetch conversation history by id
@@ -86,14 +93,14 @@
       });
       if (!res.ok) {
         const txt = await res.text();
-        appendMessage('Error: ' + res.status + ' ' + txt, 'error');
+        appendMessage('Error: ' + res.status + ' ' + txt, MessageType.ERROR);
         return;
       }
 
       const data = await parseResponseText(res);
       appendMessages(data);
     } catch (err) {
-      appendMessage('Network error: ' + err.message, 'error');
+      appendMessage('Network error: ' + err.message, MessageType.ERROR);
     }
   }
 
@@ -113,7 +120,7 @@
 
       if (!res.ok) {
         const txt = await res.text();
-        appendMessage('Error: ' + res.status + ' ' + txt, 'error');
+        appendMessage('Error: ' + res.status + ' ' + txt, MessageType.ERROR);
         return;
       }
 
@@ -132,48 +139,79 @@
       }
 
       // Support different response shapes
-      let dataMessage = null;
+      let dataMessage;
       if (data && typeof data === 'object') {
-        dataMessage = data.message || (Array.isArray(data) ? data[0] : null) || { messageType: 'assistant', text: JSON.stringify(data) };
+        dataMessage = data.message || (Array.isArray(data) ? data[0] : null) || { messageType: MessageType.ASSISTANT, text: JSON.stringify(data) };
       } else {
-        dataMessage = { messageType: 'assistant', text: String(data) };
+        dataMessage = { messageType: MessageType.ASSISTANT, text: String(data) };
       }
 
-      appendMessage(createMessage(dataMessage.messageType, dataMessage.text), dataMessage.messageType);
+      const mt = (dataMessage.messageType || dataMessage.metadata && dataMessage.metadata.role || 'assistant').toString().toLowerCase();
+      const txt = dataMessage.text || dataMessage.content || dataMessage.message || '';
+      appendMessage(createMessage(mt, txt), mt);
     } catch (err) {
-      appendMessage('Network error: ' + err.message, 'error');
+      appendMessage('Network error: ' + err.message, MessageType.ERROR);
     } finally {
       setSending(false);
     }
   }
 
   // --- Store handlers ---
-  async function uploadFileToStore(file) {
+  function showProgress(progressEl, show) {
+    if (!progressEl) return;
+    progressEl.hidden = !show;
+    progressEl.setAttribute('aria-hidden', String(!show));
+  }
+
+  function updateProgress(progressEl, percent) {
+    if (!progressEl) return;
+    progressEl.value = Math.max(0, Math.min(100, Math.round(percent)));
+  }
+
+  // Use XHR for file upload to show progress reliably (returns a Promise)
+  function uploadFileToStore(file) {
     appendMessage(`Uploading file: ${file.name}`, MessageType.INFO);
     const fd = new FormData();
     fd.append('file', file);
 
-    try {
-      const res = await fetch(API_STORE, {
-        method: 'POST',
-        credentials: 'same-origin',
-        body: fd
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', API_STORE, true);
+      xhr.withCredentials = true;
+
+      xhr.upload.addEventListener('progress', function (e) {
+        if (e.lengthComputable) {
+          const pct = (e.loaded / e.total) * 100;
+          updateProgress(storeFileProgress, pct);
+          showProgress(storeFileProgress, true);
+        }
       });
 
-      if (!res.ok) {
-        const txt = await res.text();
-        appendMessage('Store upload error: ' + res.status + ' ' + txt, MessageType.ERROR);
-        return;
-      }
+      xhr.addEventListener('load', function () {
+        showProgress(storeFileProgress, false);
+        if (xhr.status >= 200 && xhr.status < 300) {
+          appendMessage('File uploaded successfully', MessageType.ASSISTANT);
+          resolve(xhr.responseText);
+        } else {
+          appendMessage(`Store upload error: ${xhr.status} ${xhr.responseText}`, MessageType.ERROR);
+          reject(new Error(xhr.responseText || ('Status ' + xhr.status)));
+        }
+      });
 
-      appendMessage('File uploaded successfully', MessageType.ASSISTANT);
-    } catch (err) {
-      appendMessage('Network error: ' + err.message, MessageType.ERROR);
-    }
+      xhr.addEventListener('error', function () {
+        showProgress(storeFileProgress, false);
+        appendMessage('Network error during file upload', MessageType.ERROR);
+        reject(new Error('Network error'));
+      });
+
+      xhr.send(fd);
+    });
   }
 
   async function sendUrlToStore(url) {
     appendMessage(`Sending URL to store: ${url}`, MessageType.INFO);
+    showProgress(storeUrlProgress, true);
+    updateProgress(storeUrlProgress, 10);
 
     try {
       const res = await fetch(API_STORE, {
@@ -183,6 +221,9 @@
         body: JSON.stringify({ url })
       });
 
+      updateProgress(storeUrlProgress, 100);
+      showProgress(storeUrlProgress, false);
+
       if (!res.ok) {
         const txt = await res.text();
         appendMessage('Store URL error: ' + res.status + ' ' + txt, MessageType.ERROR);
@@ -191,6 +232,7 @@
 
       appendMessage('URL sent successfully', MessageType.ASSISTANT);
     } catch (err) {
+      showProgress(storeUrlProgress, false);
       appendMessage('Network error: ' + err.message, MessageType.ERROR);
     }
   }
@@ -215,29 +257,33 @@
     }
   });
 
-  // Store control event wiring (if DOM elements exist)
-  if (storeUploadBtn && storeFileInput) {
-    storeUploadBtn.addEventListener('click', function () {
+  // Store file form handling
+  if (storeFileForm) {
+    storeFileForm.addEventListener('submit', function (e) {
+      e.preventDefault();
       const file = storeFileInput.files && storeFileInput.files[0];
       if (!file) {
         appendMessage('No file selected for upload', MessageType.ERROR);
         return;
       }
-      if (file.type && file.type !== 'application/pdf') {
+      if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
         appendMessage('Only PDF files are supported', MessageType.ERROR);
         return;
       }
-      uploadFileToStore(file);
+      uploadFileToStore(file).catch(()=>{});
     });
   }
 
-  if (storeUrlBtn && storeUrlInput) {
-    storeUrlBtn.addEventListener('click', function () {
+  // Store URL form handling
+  if (storeUrlForm) {
+    storeUrlForm.addEventListener('submit', function (e) {
+      e.preventDefault();
       const url = (storeUrlInput.value || '').trim();
       if (!url) {
         appendMessage('No URL provided', MessageType.ERROR);
         return;
       }
+      storeUrlInput.value = '';
       sendUrlToStore(url);
     });
 

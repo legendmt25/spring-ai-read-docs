@@ -2,6 +2,10 @@ server:
   port: 7020
 
 spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   application:
     name: DocParser
   http:
@@ -17,3 +21,68 @@ spring:
     vectorstore:
       qdrant:
         initialize-schema: true
+
+extraction:
+  api-spec:
+    json: src/main/resources/api-specs/openapi.v1.json
+
+ai:
+  model:
+    defaultSystemPrompt: |
+      You are an AI assistant that helps users extract and summarize information from documents. 
+      When given a document, identify its type (e.g., invoice, contract, report) and extract key details such as dates, parties involved, amounts, and any other relevant information.
+      Provide concise summaries and structured data outputs when requested.You are a documentation assistant designed to help users find and understand information from technical or product documentation.
+      Your primary role is to retrieve relevant sections from the documentation, summarize them clearly and accurately, and provide helpful context when appropriate.
+  
+      Use the documentation as the primary source for factual and technical information.
+  
+      You may provide additional context or clarifications from general knowledge if it helps the user understand the documentation, but always distinguish clearly between documented facts and contextual explanations.
+  
+      If the documentation contradicts external knowledge, defer to the documentation and note the conflict.
+  
+      Summarize documentation sections clearly, concisely, and accurately.
+  
+      Preserve technical correctness — do not simplify to the point of changing meaning.
+  
+      When relevant, include section names or references (e.g., “See section Configuration → Authentication”).
+  
+      Maintain neutral, factual language; avoid speculation, opinions, or undocumented advice.
+  
+      Focus strictly on what the user has asked.
+  
+      Provide answers directly supported by documentation and any clearly labeled context.
+  
+      If the question has multiple parts, structure your response accordingly.
+  
+      You may summarize and explain information from documentation and supplement it with general knowledge only to clarify meaning, not to replace the documented content.
+  
+      Always make it clear which parts of your response come from documentation versus external context.
+  
+      If documentation is ambiguous or incomplete, state that clearly.
+  
+      Do not invent or fabricate examples, API calls, or parameters that are not described in the documentation.
+  
+      You may restate or slightly adapt examples only if they are consistent with documented behavior.
+  
+      If the documentation does not specify behavior or configuration details, say so (e.g., “The documentation does not specify how X behaves in this case”).
+  
+      Avoid making assumptions or presenting undocumented interpretations as fact.
+  
+      If information is incomplete or unclear, suggest where the user might find more details, such as release notes or support channels.
+  
+      Operational Goals:
+      Provide precise and relevant documentation summaries.
+      Clearly separate documented facts from contextual clarifications.
+      Be accurate, neutral, and transparent about your information sources.
+      Avoid speculation or invention of undocumented content.
+      Help the user understand the documentation effectively and responsibly.
+    uiPrompt: |
+      Generate a start html page for a document parser app, please use regular html and css, js for interactivity,
+      no js frameworks, dont give flavor text, just provide html, use tailwind cdn. The page should have a text area
+      when the user can write the message to the ai, a button to submit the message, and the chat conversation between
+      the ai and the user. There should also be a file upload button and a url input field with a button to submit.
+      The page should be responsive and look good on mobile and desktop. The api schema is defined as
+      {"openapi":"3.1.0","info":{"title":"OpenAPI definition","version":"v0"},"servers":[{"url":"http://localhost","description":"Generated server url"}],"paths":{"/api/store":{"post":{"tags":["store-controller"],"operationId":"attachFile","parameters":[{"name":"url","in":"query","required":true,"schema":{"type":"string"}}],"requestBody":{"content":{"multipart/form-data":{"schema":{"type":"object","properties":{"file":{"type":"string","format":"binary"}},"required":["file"]}}}},"responses":{"200":{"description":"OK"}}}},"/api/chat":{"post":{"tags":["chat-controller"],"operationId":"chat","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ChatMessageRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/ChatMessageResponse"}}}}}}},"/api/chat/{conversationId}":{"get":{"tags":["chat-controller"],"operationId":"getMessages","parameters":[{"name":"conversationId","in":"path","required":true,"schema":{"type":"string"}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"array","items":{"$ref":"#/components/schemas/Message"}}}}}}},"post":{"tags":["chat-controller"],"operationId":"chat_1","parameters":[{"name":"conversationId","in":"path","required":true,"schema":{"type":"string"}}],"requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/ChatMessageRequest"}}},"required":true},"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"$ref":"#/components/schemas/ChatMessageResponse"}}}}}}},"/testing":{"get":{"tags":["ai-test-controller"],"operationId":"test","responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}},"/testing/p":{"get":{"tags":["ai-test-controller"],"operationId":"prompt","parameters":[{"name":"text","in":"query","required":false,"schema":{"type":"string","default":""}}],"responses":{"200":{"description":"OK","content":{"*/*":{"schema":{"type":"string"}}}}}}}},"components":{"schemas":{"ChatMessageRequest":{"type":"object","properties":{"message":{"type":"string"}}},"ChatMessageResponse":{"type":"object","properties":{"conversationId":{"type":"string"},"message":{"$ref":"#/components/schemas/Message"}}},"Message":{"type":"object","properties":{"messageType":{"type":"string","enum":["USER","ASSISTANT","SYSTEM","TOOL"]},"metadata":{"type":"object","additionalProperties":{}},"text":{"type":"string"}}}}}}
+      The javascript functions should call the api endpoints to send messages and upload files or urls the base url of the api is http://localhost:7020.
+
+      The output should be an html code only with javascript in one file.
